@@ -1,0 +1,11 @@
+# Data loading and plotting
+numpy
+pandas>=2.0
+xlrd>=2.0        # reads EIA's .xls workbooks
+matplotlib
+jupyter
+
+# Models (used in later sections)
+torch
+openai
+python-dotenv
