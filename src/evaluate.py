@@ -36,9 +36,11 @@ def compare(daily: pd.DataFrame, forecasts: dict, splits=("train", "val"),
                 them have a forecast, so the numbers are directly comparable.
 
     Returns one row per (split, model) with:
-      n        - number of forecasts scored
-      coverage - share of the split's usable rows that were scored
+      n         - number of forecasts scored
+      coverage  - share of the split's usable rows that were scored
       MAE, RMSE
+      direction - share of forecasts that called the move (up or down)
+                  correctly. Blank for persistence, which never predicts a move.
     """
     results = []
     for split in splits:
@@ -49,6 +51,9 @@ def compare(daily: pd.DataFrame, forecasts: dict, splits=("train", "val"),
             mask = shared if same_rows else table[name].notna()
             n = int(mask.sum())
             actual, pred = rows.loc[mask, "wti_target"], table.loc[mask, name]
+            current = rows.loc[mask, "wti"]
+            moved = pred != current
+            right_way = np.sign(pred - current) == np.sign(actual - current)
             results.append({
                 "split": split,
                 "model": name,
@@ -56,5 +61,6 @@ def compare(daily: pd.DataFrame, forecasts: dict, splits=("train", "val"),
                 "coverage": n / len(rows) if len(rows) else np.nan,
                 "MAE": mae(actual, pred) if n else np.nan,
                 "RMSE": rmse(actual, pred) if n else np.nan,
+                "direction": right_way[moved].mean() if moved.any() else np.nan,
             })
     return pd.DataFrame(results).set_index(["split", "model"])
